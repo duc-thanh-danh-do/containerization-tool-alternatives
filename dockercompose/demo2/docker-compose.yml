@@ -1,0 +1,124 @@
+# docker-compose.yml
+# This file defines and runs multiple containers together.
+# In this demo, we have 3 services:
+# 1. postgres  = database
+# 2. backend   = Node/Express API
+# 3. frontend  = React app served by nginx
+
+services:
+  # PostgreSQL database service
+  postgres:
+    # Use an existing PostgreSQL image from Docker Hub.
+    # alpine = smaller/lighter Linux-based image.
+    image: postgres:16-alpine
+
+    # Give the container a clear name.
+    # Without this, Docker Compose generates a name automatically.
+    container_name: demo2-postgres
+
+    # Environment variables used by the official postgres image
+    # when the database is created for the first time.
+    environment:
+      # PostgreSQL username
+      POSTGRES_USER: dan
+
+      # PostgreSQL password
+      POSTGRES_PASSWORD: secret
+
+      # Initial database name
+      POSTGRES_DB: restaurant
+
+    # Persist database data outside the container.
+    # Left side: named volume managed by Docker.
+    # Right side: PostgreSQL data folder inside the container.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # We do NOT expose PostgreSQL to the host machine in this demo.
+    # The backend can still connect to PostgreSQL internally using:
+    # host: postgres
+    # port: 5432
+    #
+    # Only uncomment this if you want to connect from your host machine
+    # using tools like DBeaver, pgAdmin, or psql.
+    #
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+
+  # Backend API service
+  backend:
+    # Build the backend image from the Dockerfile inside ./backend
+    build: ./backend
+
+    # Give the backend container a clear name.
+    container_name: demo2-backend
+
+    # Environment variables passed into the backend container.
+    # The Node/Express app reads these values using process.env.
+    environment:
+      # Important:
+      # "postgres" is the Compose service name above.
+      # It works like a hostname inside the Docker Compose network.
+      # Do NOT use localhost here, because localhost would mean
+      # the backend container itself, not the database container.
+      DB_HOST: postgres
+
+      # PostgreSQL listens on port 5432 inside the Docker network.
+      DB_PORT: 5432
+
+      # These must match the postgres service environment above.
+      DB_USER: dan
+      DB_PASSWORD: secret
+      DB_NAME: restaurant
+
+    # Expose backend API to the host machine.
+    # Format:
+    # "host_ip:host_port:container_port"
+    #
+    # 127.0.0.1:5000:5000 means:
+    # host machine localhost:5000 -> backend container port 5000
+    #
+    # Using 127.0.0.1 makes it safer for local development,
+    # because only this machine can access it directly.
+    ports:
+      - "127.0.0.1:5000:5000"
+
+    # Start postgres container before backend container.
+    # Important:
+    # depends_on controls start order only.
+    # It does NOT guarantee that PostgreSQL is ready to accept connections.
+    # That is why the backend may need retry logic or a healthcheck.
+    depends_on:
+      - postgres
+
+
+  # Frontend service
+  frontend:
+    # Build the frontend image from the Dockerfile inside ./frontend
+    build: ./frontend
+
+    # Give the frontend container a clear name.
+    container_name: demo2-frontend
+
+    # Expose frontend to the host machine.
+    # host localhost:3000 -> frontend container port 80
+    #
+    # The frontend container uses nginx, and nginx listens on port 80.
+    ports:
+      - "127.0.0.1:3000:80"
+
+    # Start backend container before frontend container.
+    # Again, this only controls start order, not full readiness.
+    depends_on:
+      - backend
+
+
+# Named volumes managed by Docker.
+# postgres_data stores PostgreSQL data outside the postgres container.
+# If the postgres container is deleted, the data can still remain in this volume.
+#
+# docker compose down      = containers removed, volume remains
+# docker compose down -v   = containers removed, volume deleted too
+volumes:
+  postgres_data:

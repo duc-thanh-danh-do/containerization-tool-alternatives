@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dockerfile Test 2 - ARG and ENV</title>
+</head>
+<body>
+  <h1>Dockerfile Test 2: ARG and ENV Test</h1>
+
+  <h2>Exercise Description</h2>
+  <p>
+    This exercise is designed to practice Dockerfile basics and understand the
+    difference between <strong>ARG</strong> and <strong>ENV</strong>.
+  </p>
+
+  <p>
+    The Docker image uses a Python base image and starts a simple HTTP server
+    inside the container to serve this static HTML page.
+  </p>
+
+  <h2>Exercise Task</h2>
+  <p>
+    Create a Dockerfile that uses <strong>ARG</strong> as a build-time variable
+    and <strong>ENV</strong> as an environment variable stored in the image/container.
+  </p>
+
+  <p>
+    During the image build process, use these values to create an
+    <strong>app-info.txt</strong> file.
+  </p>
+
+  <h2>Main Learning Goal</h2>
+  <p>
+    <strong>ARG</strong> is mainly used during <strong>docker build</strong>.
+    It can be changed with <code>--build-arg</code> when building the image.
+  </p>
+
+  <p>
+    <strong>ENV</strong> is stored in the image and can still be available when
+    the container is running.
+  </p>
+
+  <h2>Expected Test Result</h2>
+  <p>
+    After building and running the image, open the generated file below to check
+    the build-time information:
+  </p>
+
+  <p>
+    <a href="/app-info.txt">Open app-info.txt</a>
+  </p>
+
+  <h2>Commands Used</h2>
+  <p>Build with default ARG value:</p>
+  <pre><code>docker build -t dockerfile-level2 .</code></pre>
+
+  <p>Build with a custom ARG value:</p>
+  <pre><code>docker build -t dockerfile-level2:v2 --build-arg BUILD_VERSION=2.0 .</code></pre>
+
+  <p>Run the container:</p>
+  <pre><code>docker run --rm -p 8000:8000 dockerfile-level2</code></pre>
+</body>
+</html>
