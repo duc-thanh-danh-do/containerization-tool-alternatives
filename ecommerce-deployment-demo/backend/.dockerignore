@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+.gradle
+build
+out
+bin
+*.iml
+*.log
+.idea
+.vscode
+src/test

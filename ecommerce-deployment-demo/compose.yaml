@@ -1,0 +1,55 @@
+name: ecomsphere-demo
+
+services:
+  database:
+    image: mongo:8.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      MONGO_URI: ${MONGO_URI:-mongodb://database:27017/EcomSphere}
+      JWT_SECRET: ${JWT_SECRET:-walkthrough-only-jwt-secret-change-before-real-deployment-2026}
+      EXTERNAL_API: ${EXTERNAL_API:-https://dummyjson.com}
+      CLIENT_URI: ${CLIENT_URI:-http://localhost:5173}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-walkthrough-placeholder}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-walkthrough-placeholder}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-walkthrough-placeholder}
+      USE_MOCK_CLOUDINARY: ${USE_MOCK_CLOUDINARY:-true}
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-sk_test_walkthrough_placeholder}
+      USE_MOCK_STRIPE: ${USE_MOCK_STRIPE:-true}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-pk_test_walkthrough_placeholder}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
